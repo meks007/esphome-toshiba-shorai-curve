@@ -68,6 +68,7 @@ enum ToshibaSwingMode {
     SWING_MODE_FIXED_3 = 0x52,
     SWING_MODE_FIXED_4 = 0x53,
     SWING_MODE_FIXED_5 = 0x54,
+    SWING_MODE_HADA_CARE_FLOW = 0x60,
     SWING_MODE_NONE = 0x00,
 };
 
@@ -387,46 +388,66 @@ class ToshibaController final : public climate::Climate, public Component {
     }
 
     void handle_register_swing_mode(ToshibaSwingMode value) {
+        const char* select_state = nullptr;
         switch (value) {
             case ToshibaSwingMode::SWING_MODE_OFF:
                 ESP_LOGI(TAG, "[REGISTER] received swing mode: %s", "OFF");
                 this->swing_mode = climate::CLIMATE_SWING_OFF;
+                select_state = "Off";
                 break;
             case ToshibaSwingMode::SWING_MODE_SWING_VERTICAL:
                 ESP_LOGI(TAG, "[REGISTER] received swing mode: %s", "SWING_VERTICAL");
                 this->swing_mode = climate::CLIMATE_SWING_VERTICAL;
+                select_state = "Vertical";
                 break;
             case ToshibaSwingMode::SWING_MODE_SWING_HORIZONTAL:
                 ESP_LOGI(TAG, "[REGISTER] received swing mode: %s", "SWING_HORIZONTAL");
                 this->swing_mode = climate::CLIMATE_SWING_HORIZONTAL;
+                select_state = "Horizontal";
                 break;
             case ToshibaSwingMode::SWING_MODE_SWING_VERTICAL_AND_HORIZONTAL:
                 ESP_LOGI(TAG, "[REGISTER] received swing mode: %s", "SWING_VERTICAL_AND_HORIZONTAL");
                 this->swing_mode = climate::CLIMATE_SWING_BOTH;
+                select_state = "Vertical & Horizontal";
                 break;
             case ToshibaSwingMode::SWING_MODE_FIXED_1:
                 ESP_LOGI(TAG, "[REGISTER] received swing mode: %s", "FIXED_1");
                 this->swing_mode = climate::CLIMATE_SWING_OFF;
+                select_state = "Fixed 1";
                 break;
             case ToshibaSwingMode::SWING_MODE_FIXED_2:
                 ESP_LOGI(TAG, "[REGISTER] received swing mode: %s", "FIXED_2");
                 this->swing_mode = climate::CLIMATE_SWING_OFF;
+                select_state = "Fixed 2";
                 break;
             case ToshibaSwingMode::SWING_MODE_FIXED_3:
                 ESP_LOGI(TAG, "[REGISTER] received swing mode: %s", "FIXED_3");
                 this->swing_mode = climate::CLIMATE_SWING_OFF;
+                select_state = "Fixed 3";
                 break;
             case ToshibaSwingMode::SWING_MODE_FIXED_4:
                 ESP_LOGI(TAG, "[REGISTER] received swing mode: %s", "FIXED_4");
                 this->swing_mode = climate::CLIMATE_SWING_OFF;
+                select_state = "Fixed 4";
                 break;
             case ToshibaSwingMode::SWING_MODE_FIXED_5:
                 ESP_LOGI(TAG, "[REGISTER] received swing mode: %s", "FIXED_5");
                 this->swing_mode = climate::CLIMATE_SWING_OFF;
+                select_state = "Fixed 5";
+                break;
+            case ToshibaSwingMode::SWING_MODE_HADA_CARE_FLOW:
+                ESP_LOGI(TAG, "[REGISTER] received swing mode: %s", "HADA_CARE_FLOW");
+                this->swing_mode = climate::CLIMATE_SWING_OFF;
+                select_state = "HADA Care Flow";
                 break;
             default:
                 ESP_LOGE(TAG, "[REGISTER] received unknown swing mode: %s", format_hex_pretty((uint8_t)value).c_str());
                 break;
+        }
+        if (select_state != nullptr && swing_mode_select_ != nullptr) {
+            updating_from_ac_ = true;
+            swing_mode_select_->publish_state(select_state);
+            updating_from_ac_ = false;
         }
         this->publish_state();
         this->internal_swing_mode_ = value;
@@ -1121,6 +1142,7 @@ public:
     }
 
     void set_swing_mode_select(int mode) {
+        if (updating_from_ac_) return;
         if (!is_initialized_) {
             ESP_LOGE(TAG, "not initialized yet, ignoring swing mode select command");
             return;
@@ -1162,6 +1184,10 @@ public:
                 break;
             case 8:
                 this->internal_swing_mode_ = ToshibaSwingMode::SWING_MODE_FIXED_5;
+                this->swing_mode = climate::CLIMATE_SWING_OFF;
+                break;
+            case 9:
+                this->internal_swing_mode_ = ToshibaSwingMode::SWING_MODE_HADA_CARE_FLOW;
                 this->swing_mode = climate::CLIMATE_SWING_OFF;
                 break;
             default:
