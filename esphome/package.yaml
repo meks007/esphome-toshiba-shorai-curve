@@ -130,11 +130,6 @@ select:
       - "Vertical"
       - "Horizontal"
       - "Vertical & Horizontal"
-      - "Fixed 1"
-      - "Fixed 2"
-      - "Fixed 3"
-      - "Fixed 4"
-      - "Fixed 5"
       - "HADA Care Flow"
     on_value:
       - lambda: |-
@@ -162,6 +157,7 @@ switch:
       internal: true
     ionizer:
       name: Ionizer
+      icon: mdi:air-purifier
 
   - platform: restart
     name: "Restart"

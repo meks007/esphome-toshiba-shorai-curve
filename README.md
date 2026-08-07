@@ -150,6 +150,10 @@ This requires a more complex regulation in the `smart_thermostat_control` functi
 A recommended value is `4`, which results in a regulation accuracy of around `+/- 0.25°K`.
 Higher values increase the accuracy at the cost of more compressor cycles.
 
+## Fan speeds
+
+The climate entity exposes the practical `Auto`, `Low`, `Medium`, and `High` speeds. They write the confirmed Toshiba values `0x41`, `0x32`, `0x34`, and `0x36`; intermediate values received from the original remote are grouped under the nearest displayed speed.
+
 ## Self-cleaning
 
 The shared package enables the confirmed `0xCB` self-cleaning register. In line with the Toshiba manual, turning the unit off from Home Assistant after at least 10 minutes in cooling or dry mode enables the 30-minute evaporator drying cycle. Heating, fan-only and shorter runs do not trigger it. Turning the unit on disables an active cycle. Set the `enable_self_cleaning` substitution to `false` to opt out.

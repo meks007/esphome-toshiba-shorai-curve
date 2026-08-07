@@ -17,12 +17,38 @@ assert re.search(
     re.DOTALL,
 )
 assert re.search(
-    r"case 9:.*?"
+    r"case 4:.*?"
     r"internal_swing_mode_ = ToshibaSwingMode::SWING_MODE_HADA_CARE_FLOW;",
     HEADER,
     re.DOTALL,
 )
 assert "set_supported_swing_modes" not in HEADER
+
+assert "set_supported_custom_fan_modes" not in HEADER
+assert "add_supported_fan_mode(climate::CLIMATE_FAN_QUIET)" not in HEADER
+for mode in ("AUTO", "LOW", "MEDIUM", "HIGH"):
+    assert f"add_supported_fan_mode(climate::CLIMATE_FAN_{mode})" in HEADER
+assert re.search(
+    r"case ToshibaFanMode::FAN_QUIET:\s*"
+    r"case ToshibaFanMode::FAN_LOW:.*?"
+    r"set_fan_mode_\(climate::CLIMATE_FAN_LOW\)",
+    HEADER,
+    re.DOTALL,
+)
+assert re.search(
+    r"case ToshibaFanMode::FAN_LOW_MEDIUM:\s*"
+    r"case ToshibaFanMode::FAN_MEDIUM:.*?"
+    r"set_fan_mode_\(climate::CLIMATE_FAN_MEDIUM\)",
+    HEADER,
+    re.DOTALL,
+)
+assert re.search(
+    r"case ToshibaFanMode::FAN_MEDIUM_HIGH:\s*"
+    r"case ToshibaFanMode::FAN_HIGH:.*?"
+    r"set_fan_mode_\(climate::CLIMATE_FAN_HIGH\)",
+    HEADER,
+    re.DOTALL,
+)
 
 assert re.search(r"SELF_CLEANING\s*=\s*0xCB", HEADER)
 assert re.search(r"SELF_CLEANING_ON\s*=\s*0x18", HEADER)
@@ -46,7 +72,15 @@ swing_options = re.search(
 )
 assert swing_options is not None
 options = re.findall(r'^\s+- "([^"]+)"$', swing_options["options"], re.MULTILINE)
-assert options[9] == "HADA Care Flow"
+assert options == ["Off", "Vertical", "Horizontal", "Vertical & Horizontal", "HADA Care Flow"]
+assert all(f"Fixed {position}" not in options for position in range(1, 6))
+for position in range(1, 6):
+    assert re.search(
+        rf"case ToshibaSwingMode::SWING_MODE_FIXED_{position}:.*?"
+        r'select_state = "Off";',
+        HEADER,
+        re.DOTALL,
+    )
 
 for name in ("Special Mode", "Silent Mode", "Fireplace"):
     assert re.search(rf"name: {name}\n\s+id: .+\n\s+internal: true", CONFIG)

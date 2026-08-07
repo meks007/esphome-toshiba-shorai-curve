@@ -58,9 +58,6 @@ public:
     }
 };
 
-static constexpr const char* CUSTOM_FAN_MODE_LOW_MEDIUM = "low medium";
-static constexpr const char* CUSTOM_FAN_MODE_MEDIUM_HIGH = "medium high";
-
 enum ToshibaSwingMode {
     SWING_MODE_OFF = 0x31,
     SWING_MODE_SWING_VERTICAL = 0x41,
@@ -374,25 +371,16 @@ class ToshibaController final : public climate::Climate, public Component {
                 this->set_fan_mode_(climate::CLIMATE_FAN_AUTO);
                 break;
             case ToshibaFanMode::FAN_QUIET:
-                ESP_LOGI(TAG, "[REGISTER] received fan mode: %s", "FAN_MODE_QUIET");
-                this->set_fan_mode_(climate::CLIMATE_FAN_QUIET);
-                break;
             case ToshibaFanMode::FAN_LOW:
                 ESP_LOGI(TAG, "[REGISTER] received fan mode: %s", "FAN_MODE_LOW");
                 this->set_fan_mode_(climate::CLIMATE_FAN_LOW);
                 break;
             case ToshibaFanMode::FAN_LOW_MEDIUM:
-                ESP_LOGI(TAG, "[REGISTER] received fan mode: %s", "CUSTOM_FAN_MODE_LOW_MEDIUM");
-                this->set_custom_fan_mode_(CUSTOM_FAN_MODE_LOW_MEDIUM);
-                break;
             case ToshibaFanMode::FAN_MEDIUM:
                 ESP_LOGI(TAG, "[REGISTER] received fan mode: %s", "FAN_MODE_MEDIUM");
                 this->set_fan_mode_(climate::CLIMATE_FAN_MEDIUM);
                 break;
             case ToshibaFanMode::FAN_MEDIUM_HIGH:
-                ESP_LOGI(TAG, "[REGISTER] received fan mode: %s", "CUSTOM_FAN_MODE_MEDIUM_HIGH");
-                this->set_custom_fan_mode_(CUSTOM_FAN_MODE_MEDIUM_HIGH);
-                break;
             case ToshibaFanMode::FAN_HIGH:
                 ESP_LOGI(TAG, "[REGISTER] received fan mode: %s", "FAN_MODE_HIGH");
                 this->set_fan_mode_(climate::CLIMATE_FAN_HIGH);
@@ -432,27 +420,27 @@ class ToshibaController final : public climate::Climate, public Component {
             case ToshibaSwingMode::SWING_MODE_FIXED_1:
                 ESP_LOGI(TAG, "[REGISTER] received swing mode: %s", "FIXED_1");
                 this->swing_mode = climate::CLIMATE_SWING_OFF;
-                select_state = "Fixed 1";
+                select_state = "Off";
                 break;
             case ToshibaSwingMode::SWING_MODE_FIXED_2:
                 ESP_LOGI(TAG, "[REGISTER] received swing mode: %s", "FIXED_2");
                 this->swing_mode = climate::CLIMATE_SWING_OFF;
-                select_state = "Fixed 2";
+                select_state = "Off";
                 break;
             case ToshibaSwingMode::SWING_MODE_FIXED_3:
                 ESP_LOGI(TAG, "[REGISTER] received swing mode: %s", "FIXED_3");
                 this->swing_mode = climate::CLIMATE_SWING_OFF;
-                select_state = "Fixed 3";
+                select_state = "Off";
                 break;
             case ToshibaSwingMode::SWING_MODE_FIXED_4:
                 ESP_LOGI(TAG, "[REGISTER] received swing mode: %s", "FIXED_4");
                 this->swing_mode = climate::CLIMATE_SWING_OFF;
-                select_state = "Fixed 4";
+                select_state = "Off";
                 break;
             case ToshibaSwingMode::SWING_MODE_FIXED_5:
                 ESP_LOGI(TAG, "[REGISTER] received swing mode: %s", "FIXED_5");
                 this->swing_mode = climate::CLIMATE_SWING_OFF;
-                select_state = "Fixed 5";
+                select_state = "Off";
                 break;
             case ToshibaSwingMode::SWING_MODE_HADA_CARE_FLOW:
                 ESP_LOGI(TAG, "[REGISTER] received swing mode: %s", "HADA_CARE_FLOW");
@@ -826,12 +814,9 @@ class ToshibaController final : public climate::Climate, public Component {
             });
         }
         supported_traits_.add_supported_fan_mode(climate::CLIMATE_FAN_AUTO);
-        supported_traits_.add_supported_fan_mode(climate::CLIMATE_FAN_QUIET);
         supported_traits_.add_supported_fan_mode(climate::CLIMATE_FAN_LOW);
         supported_traits_.add_supported_fan_mode(climate::CLIMATE_FAN_MEDIUM);
         supported_traits_.add_supported_fan_mode(climate::CLIMATE_FAN_HIGH);
-
-        this->set_supported_custom_fan_modes({CUSTOM_FAN_MODE_LOW_MEDIUM, CUSTOM_FAN_MODE_MEDIUM_HIGH});
 
         supported_traits_.set_feature_flags(climate::CLIMATE_SUPPORTS_CURRENT_TEMPERATURE);
         
@@ -1069,10 +1054,6 @@ public:
             this->request_write_register_(ToshibaCommand::FAN_MODE, ToshibaFanMode::FAN_AUTO);
             return;
         }
-        if (fan_mode_val == climate::CLIMATE_FAN_QUIET) {
-            this->request_write_register_(ToshibaCommand::FAN_MODE, ToshibaFanMode::FAN_QUIET);
-            return;
-        }
         if (fan_mode_val == climate::CLIMATE_FAN_LOW) {
             this->request_write_register_(ToshibaCommand::FAN_MODE, ToshibaFanMode::FAN_LOW);
             return;
@@ -1086,26 +1067,6 @@ public:
             return;
         }
         ESP_LOGE(TAG, "received unknown fan mode: %d", (int)fan_mode_val);
-    }
-
-    void control_handle_custom_fan_mode(const climate::ClimateCall& call) {
-        if (this->internal_power_state_ == ToshibaState::STATE_OFF) {
-            ESP_LOGE(TAG, "IDU is powered off, ignoring custom fan mode control command");
-            return;
-        }
-
-        auto cfm = call.get_custom_fan_mode();
-        this->set_custom_fan_mode_(cfm.c_str());
-
-        if (cfm == CUSTOM_FAN_MODE_LOW_MEDIUM) {
-            this->request_write_register_(ToshibaCommand::FAN_MODE, ToshibaFanMode::FAN_LOW_MEDIUM);
-            return;
-        }
-        if (cfm == CUSTOM_FAN_MODE_MEDIUM_HIGH) {
-            this->request_write_register_(ToshibaCommand::FAN_MODE, ToshibaFanMode::FAN_MEDIUM_HIGH);
-            return;
-        }
-        ESP_LOGE(TAG, "received unknown custom fan mode: %s", cfm.c_str());
     }
 
     void control_handle_swing_mode(const climate::ClimateCall& call) {
@@ -1158,9 +1119,6 @@ public:
         }
         if (call.get_fan_mode().has_value()) {
             this->control_handle_fan_mode(call);
-        }
-        if (!call.get_custom_fan_mode().empty()) {
-            this->control_handle_custom_fan_mode(call);
         }
         if (call.get_swing_mode().has_value()) {
             this->control_handle_swing_mode(call);
@@ -1222,26 +1180,6 @@ public:
                 this->swing_mode = climate::CLIMATE_SWING_BOTH;
                 break;
             case 4:
-                this->internal_swing_mode_ = ToshibaSwingMode::SWING_MODE_FIXED_1;
-                this->swing_mode = climate::CLIMATE_SWING_OFF;
-                break;
-            case 5:
-                this->internal_swing_mode_ = ToshibaSwingMode::SWING_MODE_FIXED_2;
-                this->swing_mode = climate::CLIMATE_SWING_OFF;
-                break;
-            case 6:
-                this->internal_swing_mode_ = ToshibaSwingMode::SWING_MODE_FIXED_3;
-                this->swing_mode = climate::CLIMATE_SWING_OFF;
-                break;
-            case 7:
-                this->internal_swing_mode_ = ToshibaSwingMode::SWING_MODE_FIXED_4;
-                this->swing_mode = climate::CLIMATE_SWING_OFF;
-                break;
-            case 8:
-                this->internal_swing_mode_ = ToshibaSwingMode::SWING_MODE_FIXED_5;
-                this->swing_mode = climate::CLIMATE_SWING_OFF;
-                break;
-            case 9:
                 this->internal_swing_mode_ = ToshibaSwingMode::SWING_MODE_HADA_CARE_FLOW;
                 this->swing_mode = climate::CLIMATE_SWING_OFF;
                 break;
