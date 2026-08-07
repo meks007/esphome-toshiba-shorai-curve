@@ -4,6 +4,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).parent
 HEADER = (ROOT / "esphome/toshiba_controller/toshiba_controller.h").read_text()
+CODEGEN = (ROOT / "esphome/toshiba_controller/__init__.py").read_text()
 CONFIG = (ROOT / "esphome/package.yaml").read_text()
 TEMPLATE = (ROOT / "esphome/template_v3.yaml").read_text()
 
@@ -37,5 +38,14 @@ for name in ("Special Mode", "Silent Mode", "Fireplace"):
 
 assert "!secret" not in CONFIG
 assert "files:\n      - esphome/package.yaml" in TEMPLATE
+assert "cv.Optional(CONF_TEMPERATURE_SENSOR_ID)" in CODEGEN
+assert "temperature_sensor_id" not in CONFIG
+assert "temperature_sensor_entity_id" not in CONFIG
+assert "SWITCH_ALWAYS_ON" in HEADER
+assert re.search(
+    r"internal_thermistor:\n\s+name: Internal Thermistor\n\s+internal: true",
+    CONFIG,
+)
+assert "name: WiFi LED" not in CONFIG
 
 print("HADA swing mapping is consistent")

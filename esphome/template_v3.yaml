@@ -5,7 +5,6 @@ substitutions:
   deviceid: "ac_unit"
   device_name: "ac-unit"
   devicename: "AC Unit"
-  temperature_sensor_entity_id: sensor.room_temperature
   smart_thermostat_multiplier: "3"
   smart_thermostat_runaway_protection: "true"
   disable_cooling_modes: "false"

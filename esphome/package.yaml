@@ -1,6 +1,5 @@
 substitutions:
   deviceid: "ac_unit"
-  temperature_sensor_entity_id: sensor.room_temperature
   smart_thermostat_multiplier: "3"
   smart_thermostat_runaway_protection: "true"
   disable_cooling_modes: "false"
@@ -33,7 +32,6 @@ toshiba_controller:
   name: ""
   id: ${deviceid}
   uart_id: ac_serial
-  temperature_sensor_id: temperature_sensor
   special_mode_select_id: special_mode
   swing_mode_select_id: swing_mode
   power_select_id: power_select
@@ -42,10 +40,6 @@ toshiba_controller:
   disable_cooling_modes: ${disable_cooling_modes}
 
 sensor:
-  - id: temperature_sensor
-    platform: homeassistant
-    internal: true
-    entity_id: ${temperature_sensor_entity_id}
   - platform: uptime
     name: Uptime
   - platform: toshiba_controller
@@ -163,21 +157,9 @@ switch:
     toshiba_controller_id: ${deviceid}
     internal_thermistor:
       name: Internal Thermistor
+      internal: true
     ionizer:
       name: Ionizer
-
-  - platform: template
-    name: WiFi LED
-    id: unit_led
-    restore_mode: RESTORE_DEFAULT_ON
-    optimistic: true
-    icon: mdi:wifi
-    on_turn_on:
-      - lambda: |-
-          static_cast<esphome::ToshibaController*>(id(${deviceid}))->set_wifi_led_switch(true);
-    on_turn_off:
-      - lambda: |-
-          static_cast<esphome::ToshibaController*>(id(${deviceid}))->set_wifi_led_switch(false);
 
   - platform: restart
     name: "Restart"

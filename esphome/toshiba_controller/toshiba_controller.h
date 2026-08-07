@@ -886,7 +886,9 @@ public:
         }
 
         if (switch_internal_thermistor_) {
-            switch_internal_thermistor_->restore_and_set_mode(esphome::switch_::SWITCH_RESTORE_DEFAULT_OFF);
+            switch_internal_thermistor_->restore_and_set_mode(
+                temperature_sensor_ == nullptr ? esphome::switch_::SWITCH_ALWAYS_ON
+                                               : esphome::switch_::SWITCH_RESTORE_DEFAULT_OFF);
         }
 
         ESP_LOGD(TAG, "setup before recv");

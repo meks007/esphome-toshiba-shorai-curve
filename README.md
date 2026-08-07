@@ -110,13 +110,12 @@ If you are upgrading from the old `base.yaml` include with `platform: custom`, t
 4. **Replace `sensor: platform: custom`** with `sensor: platform: toshiba_controller` (sensor names are preserved).
 5. **Replace `switch: platform: custom`** with `switch: platform: toshiba_controller` for Internal Thermistor and Ionizer.
 6. **Split the Special Mode select** into three separate selects: Special Mode, Silent Mode, and Fireplace (the old config had all modes in a single flat list).
-7. **Optionally add** the new WiFi LED template switch.
 
 See `template_v3.yaml` for a complete example of the new configuration format.
 
 ## Legacy ESPHome (< 2024)
 
-If you are still on an older ESPHome version, use `template.yaml` with the single-file `toshiba-controller.h` from an [older release](https://github.com/florianbrede-ayet/esphome-toshiba-hvac-controller/tree/90621ac). Note that `platform: custom` has been removed in ESPHome 2024.
+If you are still on an older ESPHome version, use the template and single-file `toshiba-controller.h` from an [older release](https://github.com/florianbrede-ayet/esphome-toshiba-hvac-controller/tree/90621ac). Note that `platform: custom` has been removed in ESPHome 2024.
 
 ## Logs
 
@@ -132,7 +131,7 @@ The NodeMCU can be powered directly from the indoor unit's UART connector 5V Pin
 
 # FAQ
 ## Smart Thermostat / Internal Thermistor
-If the binary switch `Internal Thermistor` is disabled in Home Assistant, the external temperature sensor supplied in the `yaml` configuration will be used for the room temperature.
+The internal AC thermistor is used by default. An external Home Assistant temperature sensor is optional; configure `temperature_sensor_id` and expose the `Internal Thermistor` switch only if you need external regulation.
 
 Most ACs suffer from poor thermistor placement (high position, heat draft) and Toshiba does not support external thermistors over UART.
 

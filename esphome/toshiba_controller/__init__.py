@@ -25,7 +25,7 @@ CONFIG_SCHEMA = (
     .extend(
         {
             cv.Required("uart_id"): cv.use_id(uart.UARTComponent),
-            cv.Required(CONF_TEMPERATURE_SENSOR_ID): cv.use_id(sensor.Sensor),
+            cv.Optional(CONF_TEMPERATURE_SENSOR_ID): cv.use_id(sensor.Sensor),
             cv.Required(CONF_SPECIAL_MODE_SELECT_ID): cv.use_id(select.Select),
             cv.Required(CONF_SWING_MODE_SELECT_ID): cv.use_id(select.Select),
             cv.Required(CONF_POWER_SELECT_ID): cv.use_id(select.Select),
@@ -50,8 +50,9 @@ async def to_code(config):
     uart_comp = await cg.get_variable(config["uart_id"])
     cg.add(var.set_uart(uart_comp))
 
-    temp_sensor = await cg.get_variable(config[CONF_TEMPERATURE_SENSOR_ID])
-    cg.add(var.set_temperature_sensor(temp_sensor))
+    if CONF_TEMPERATURE_SENSOR_ID in config:
+        temp_sensor = await cg.get_variable(config[CONF_TEMPERATURE_SENSOR_ID])
+        cg.add(var.set_temperature_sensor(temp_sensor))
 
     special = await cg.get_variable(config[CONF_SPECIAL_MODE_SELECT_ID])
     cg.add(var.set_special_mode_select(special))
