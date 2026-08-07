@@ -92,6 +92,10 @@ assert "cv.Optional(CONF_ENABLE_SELF_CLEANING, default=False)" in CODEGEN
 assert 'enable_self_cleaning: "true"' in CONFIG
 assert "temperature_sensor_id" not in CONFIG
 assert "temperature_sensor_entity_id" not in CONFIG
+assert re.search(
+    r"platform: internal_temperature\n\s+name: ESP Temperature\n\s+entity_category: diagnostic",
+    CONFIG,
+)
 assert "SWITCH_ALWAYS_ON" in HEADER
 assert re.search(
     r"internal_thermistor:\n\s+name: Internal Thermistor\n\s+internal: true",

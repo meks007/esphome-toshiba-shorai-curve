@@ -44,6 +44,9 @@ toshiba_controller:
 sensor:
   - platform: uptime
     name: Uptime
+  - platform: internal_temperature
+    name: ESP Temperature
+    entity_category: diagnostic
   - platform: toshiba_controller
     toshiba_controller_id: ${deviceid}
     outdoor_temperature:
