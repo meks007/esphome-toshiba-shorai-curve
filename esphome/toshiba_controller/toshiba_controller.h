@@ -17,6 +17,7 @@
 #include "esphome/core/log.h"
 
 static const char* const TAG = "toshiba-controller";
+static const char* const CAPTURE_TAG = "toshiba-capture";
 
 #define MIN_TEMP_SETPOINT_HEATING 5
 #define MIN_TEMP_SETPOINT_COOLING 17
@@ -616,6 +617,12 @@ class ToshibaController final : public climate::Climate, public Component {
         if (recv_buf_len_ == 15 || recv_buf_len_ == 17) {
             uint8_t command = recv_buf_[recv_buf_len_ - 3];
             uint8_t value = recv_buf_[recv_buf_len_ - 2];
+            // 15-byte frames announce changes made outside ESPHome, e.g. by the IR remote.
+            if (recv_buf_len_ == 15) {
+                ESP_LOGW(CAPTURE_TAG, "REMOTE_EVENT command=%s value=%s frame=%s",
+                         format_hex_pretty(command).c_str(), format_hex_pretty(value).c_str(),
+                         format_hex_pretty(recv_buf_, recv_buf_len_).c_str());
+            }
             ESP_LOGI(TAG, "received register message: %s with value %d", format_hex_pretty(command).c_str(), value);
             switch (command) {
                 case ToshibaCommand::MODE:

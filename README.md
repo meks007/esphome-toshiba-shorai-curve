@@ -123,6 +123,16 @@ If you are still on an older ESPHome version, use the template and single-file `
 esphome logs toshiba-livingroom.yaml
 ```
 
+### Capture original remote commands
+
+The firmware logs 15-byte register-change frames under the dedicated `toshiba-capture` tag. Pipe the ESPHome logs into the passive reader to save timestamped events as JSON Lines:
+
+```bash
+esphome logs toshiba-livingroom.yaml | python3 capture_remote_events.py
+```
+
+Use the original remote while the reader is running, then stop it with `Ctrl-C`. Unknown registers are preserved with their raw frame for later protocol analysis.
+
 # ESP8266
 ESP8266 is supported but requires custom wiring. Use `template_v3.yaml` as a starting point and adjust the board, UART pins (`GPIO1` TX / `GPIO3` RX), and framework accordingly.
 A bidirectional logic level converter must be connected to the UART pins.
