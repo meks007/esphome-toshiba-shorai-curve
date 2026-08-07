@@ -24,6 +24,21 @@ assert re.search(
 )
 assert "set_supported_swing_modes" not in HEADER
 
+assert re.search(r"SELF_CLEANING\s*=\s*0xCB", HEADER)
+assert re.search(r"SELF_CLEANING_ON\s*=\s*0x18", HEADER)
+assert re.search(r"SELF_CLEANING_OFF\s*=\s*0x10", HEADER)
+assert re.search(r"SELF_CLEANING_MIN_RUNTIME_MS\s+600000UL", HEADER)
+assert re.search(
+    r"previous_mode == climate::CLIMATE_MODE_COOL.*?"
+    r"previous_mode == climate::CLIMATE_MODE_DRY.*?"
+    r"ToshibaCommand::SELF_CLEANING,\s*"
+    r"ToshibaSelfCleaning::SELF_CLEANING_ON.*?"
+    r"ToshibaCommand::POWER_STATE, ToshibaState::STATE_OFF",
+    HEADER,
+    re.DOTALL,
+)
+assert "millis() - this->wet_operation_started_millis_ >= SELF_CLEANING_MIN_RUNTIME_MS" in HEADER
+
 swing_options = re.search(
     r'name: Airflow Mode.*?options:\n(?P<options>.*?)\n\s+on_value:',
     CONFIG,
@@ -39,6 +54,8 @@ for name in ("Special Mode", "Silent Mode", "Fireplace"):
 assert "!secret" not in CONFIG
 assert "files:\n      - esphome/package.yaml" in TEMPLATE
 assert "cv.Optional(CONF_TEMPERATURE_SENSOR_ID)" in CODEGEN
+assert "cv.Optional(CONF_ENABLE_SELF_CLEANING, default=False)" in CODEGEN
+assert 'enable_self_cleaning: "true"' in CONFIG
 assert "temperature_sensor_id" not in CONFIG
 assert "temperature_sensor_entity_id" not in CONFIG
 assert "SWITCH_ALWAYS_ON" in HEADER
@@ -48,4 +65,4 @@ assert re.search(
 )
 assert "name: WiFi LED" not in CONFIG
 
-print("HADA swing mapping is consistent")
+print("Toshiba mappings are consistent")

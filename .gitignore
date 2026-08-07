@@ -4,3 +4,4 @@ __pycache__/
 esphome/.esphome/
 esphome/test_build.yaml
 esphome/test_build_v3.yaml
+toshiba-remote-events.jsonl

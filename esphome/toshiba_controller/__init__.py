@@ -19,6 +19,7 @@ CONF_POWER_SELECT_ID = "power_select_id"
 CONF_SMART_THERMOSTAT_MULTIPLIER = "smart_thermostat_multiplier"
 CONF_SMART_THERMOSTAT_RUNAWAY_PROTECTION = "smart_thermostat_runaway_protection"
 CONF_DISABLE_COOLING_MODES = "disable_cooling_modes"
+CONF_ENABLE_SELF_CLEANING = "enable_self_cleaning"
 
 CONFIG_SCHEMA = (
     climate.climate_schema(ToshibaController)
@@ -36,6 +37,7 @@ CONFIG_SCHEMA = (
                 CONF_SMART_THERMOSTAT_RUNAWAY_PROTECTION, default=True
             ): cv.boolean,
             cv.Optional(CONF_DISABLE_COOLING_MODES, default=False): cv.boolean,
+            cv.Optional(CONF_ENABLE_SELF_CLEANING, default=False): cv.boolean,
         }
     )
     .extend(cv.COMPONENT_SCHEMA)
@@ -74,3 +76,4 @@ async def to_code(config):
         )
     )
     cg.add(var.set_disable_cooling_modes(config[CONF_DISABLE_COOLING_MODES]))
+    cg.add(var.set_enable_self_cleaning(config[CONF_ENABLE_SELF_CLEANING]))

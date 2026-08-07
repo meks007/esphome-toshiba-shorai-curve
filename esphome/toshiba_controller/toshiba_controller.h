@@ -22,6 +22,7 @@ static const char* const CAPTURE_TAG = "toshiba-capture";
 #define MIN_TEMP_SETPOINT_HEATING 5
 #define MIN_TEMP_SETPOINT_COOLING 17
 #define MAX_TEMP_SETPOINT 30
+#define SELF_CLEANING_MIN_RUNTIME_MS 600000UL
 
 namespace esphome {
 
@@ -29,6 +30,7 @@ struct ConfigSettings {
     double smart_thermostat_multiplier = 4.0;
     bool smart_thermostat_runaway_protection = false;
     bool disable_cooling_modes = false;
+    bool enable_self_cleaning = false;
 };
 
 enum CustomSwitchType { SWITCH_INTERNAL_THERMISTOR = 0, SWITCH_IONIZER = 1 };
@@ -83,6 +85,7 @@ enum ToshibaCommand {
     ROOM_TEMPERATURE = 0xBB,
     OUTDOOR_TEMPERATURE = 0xBE,
     IONIZER = 0xC7,
+    SELF_CLEANING = 0xCB,
     WIFILED1 = 0xDE,  // variant 1: on=0x05, off=0x00
     WIFILED2 = 0xDF,  // variant 2: on=0x00, off=0x80
     SPECIAL_MODE = 0xF7,
@@ -186,6 +189,8 @@ class ToshibaController final : public climate::Climate, public Component {
     ToshibaSpecialModes internal_special_mode_ = ToshibaSpecialModes::SPECIAL_MODE_STANDARD;
     ToshibaPowerSelection internal_power_selection_ = ToshibaPowerSelection::POWER_100;
     uint8_t internal_target_temperature_ = 20;
+    bool wet_operation_timer_running_ = false;
+    uint32_t wet_operation_started_millis_ = 0;
 
     bool is_initialized_ = false;
 
@@ -233,6 +238,16 @@ class ToshibaController final : public climate::Climate, public Component {
         ESP_LOGD(TAG, "finished sending");
     }
 
+    void update_wet_operation_timer_(climate::ClimateMode mode) {
+        bool is_wet_mode = mode == climate::CLIMATE_MODE_COOL || mode == climate::CLIMATE_MODE_DRY;
+        if (is_wet_mode && !wet_operation_timer_running_) {
+            wet_operation_started_millis_ = millis();
+            wet_operation_timer_running_ = true;
+        } else if (!is_wet_mode) {
+            wet_operation_timer_running_ = false;
+        }
+    }
+
     void handle_register_mode(ToshibaMode value) {
         if (this->internal_power_state_ == ToshibaState::STATE_OFF) {
             ESP_LOGE(TAG, "[REGISTER] received mode %s, but IDU is powered off",
@@ -250,6 +265,7 @@ class ToshibaController final : public climate::Climate, public Component {
             ESP_LOGI(TAG, "[REGISTER] received mode: %s, but cooling mode is disabled for this unit",
                      format_hex_pretty((uint8_t)value).c_str());
             this->mode = climate::CLIMATE_MODE_FAN_ONLY;
+            update_wet_operation_timer_(this->mode);
             this->publish_state();
             request_write_register_(ToshibaCommand::MODE, ToshibaMode::MODE_FAN_ONLY);
             return;
@@ -281,6 +297,7 @@ class ToshibaController final : public climate::Climate, public Component {
                 this->mode = climate::CLIMATE_MODE_OFF;
                 break;
         }
+        update_wet_operation_timer_(this->mode);
         this->publish_state();
     }
 
@@ -340,6 +357,7 @@ class ToshibaController final : public climate::Climate, public Component {
             case ToshibaState::STATE_OFF:
                 ESP_LOGI(TAG, "[REGISTER] received power state: %s", "OFF");
                 this->mode = climate::CLIMATE_MODE_OFF;
+                this->wet_operation_timer_running_ = false;
                 this->publish_state();
                 break;
             default:
@@ -542,6 +560,21 @@ class ToshibaController final : public climate::Climate, public Component {
         }
     }
 
+    void handle_register_self_cleaning(ToshibaSelfCleaning value) {
+        switch (value) {
+            case ToshibaSelfCleaning::SELF_CLEANING_ON:
+                ESP_LOGI(TAG, "[REGISTER] received self cleaning state: ON");
+                break;
+            case ToshibaSelfCleaning::SELF_CLEANING_OFF:
+                ESP_LOGI(TAG, "[REGISTER] received self cleaning state: OFF");
+                break;
+            default:
+                ESP_LOGE(TAG, "[REGISTER] received unknown self cleaning state: %s",
+                         format_hex_pretty((uint8_t)value).c_str());
+                break;
+        }
+    }
+
     void handle_register_power_selection(ToshibaPowerSelection value) {
         switch (value) {
             case ToshibaPowerSelection::POWER_50:
@@ -652,6 +685,10 @@ class ToshibaController final : public climate::Climate, public Component {
                 case ToshibaCommand::IONIZER:
                     ESP_LOGD(TAG, "received ionizer state: %s", format_hex_pretty(value).c_str());
                     handle_register_ionizer(static_cast<ToshibaIonizer>(value));
+                    break;
+                case ToshibaCommand::SELF_CLEANING:
+                    ESP_LOGD(TAG, "received self cleaning state: %s", format_hex_pretty(value).c_str());
+                    handle_register_self_cleaning(static_cast<ToshibaSelfCleaning>(value));
                     break;
                 case ToshibaCommand::POWER_SELECT:
                     ESP_LOGD(TAG, "received power select: %s", format_hex_pretty(value).c_str());
@@ -854,6 +891,7 @@ public:
     void set_swing_mode_select(esphome::select::Select* sel) { swing_mode_select_ = sel; }
     void set_power_select(esphome::select::Select* sel) { power_selection_select_ = sel; }
     void set_smart_thermostat_multiplier(float val) { config_settings_.smart_thermostat_multiplier = val; }
+    void set_enable_self_cleaning(bool val) { config_settings_.enable_self_cleaning = val; }
     void set_disable_cooling_modes(bool val) {
         config_settings_.disable_cooling_modes = val;
         configure_capabilities();
@@ -935,13 +973,28 @@ public:
     ///////////////////////////////////////////
     void control_handle_mode(const climate::ClimateCall& call) {
         auto mode_val = *call.get_mode();
-        this->mode = mode_val;
+        auto previous_mode = this->mode;
         if (mode_val == climate::CLIMATE_MODE_OFF) {
+            if (this->config_settings_.enable_self_cleaning &&
+                (previous_mode == climate::CLIMATE_MODE_COOL || previous_mode == climate::CLIMATE_MODE_DRY) &&
+                this->wet_operation_timer_running_ &&
+                millis() - this->wet_operation_started_millis_ >= SELF_CLEANING_MIN_RUNTIME_MS) {
+                this->request_write_register_(ToshibaCommand::SELF_CLEANING,
+                                              ToshibaSelfCleaning::SELF_CLEANING_ON);
+            }
+            this->mode = mode_val;
+            this->wet_operation_timer_running_ = false;
             this->request_write_register_(ToshibaCommand::POWER_STATE, ToshibaState::STATE_OFF);
             this->internal_power_state_ = ToshibaState::STATE_OFF;
             return;
         } else {
+            this->mode = mode_val;
+            this->update_wet_operation_timer_(mode_val);
             if (internal_power_state_ == ToshibaState::STATE_OFF) {
+                if (this->config_settings_.enable_self_cleaning) {
+                    this->request_write_register_(ToshibaCommand::SELF_CLEANING,
+                                                  ToshibaSelfCleaning::SELF_CLEANING_OFF);
+                }
                 this->request_write_register_(ToshibaCommand::POWER_STATE, ToshibaState::STATE_ON);
                 this->internal_power_state_ = ToshibaState::STATE_ON;
             }

@@ -13,6 +13,7 @@ EVENT_RE = re.compile(
     r"REMOTE_EVENT command=(?P<command>(?:0x)?[0-9A-Fa-f]{2}) "
     r"value=(?P<value>(?:0x)?[0-9A-Fa-f]{2}) frame=(?P<frame>.+?)\s*$"
 )
+ANSI_RE = re.compile(r"\x1b\[[0-9;]*m")
 
 COMMAND_NAMES = {
     0x80: "POWER_STATE",
@@ -24,6 +25,7 @@ COMMAND_NAMES = {
     0xBB: "ROOM_TEMPERATURE",
     0xBE: "OUTDOOR_TEMPERATURE",
     0xC7: "IONIZER",
+    0xCB: "SELF_CLEANING",
     0xDE: "WIFILED1",
     0xDF: "WIFILED2",
     0xE4: "IDU_STATUS",
@@ -44,7 +46,7 @@ def parse_event(line: str) -> dict[str, object] | None:
         "command": f"0x{command:02X}",
         "command_name": COMMAND_NAMES.get(command, "UNKNOWN"),
         "value": f"0x{value:02X}",
-        "frame": match["frame"],
+        "frame": ANSI_RE.sub("", match["frame"]),
     }
 
 

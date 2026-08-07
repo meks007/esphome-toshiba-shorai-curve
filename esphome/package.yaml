@@ -3,6 +3,7 @@ substitutions:
   smart_thermostat_multiplier: "3"
   smart_thermostat_runaway_protection: "true"
   disable_cooling_modes: "false"
+  enable_self_cleaning: "true"
 
 esp32:
   variant: esp32
@@ -38,6 +39,7 @@ toshiba_controller:
   smart_thermostat_multiplier: ${smart_thermostat_multiplier}
   smart_thermostat_runaway_protection: ${smart_thermostat_runaway_protection}
   disable_cooling_modes: ${disable_cooling_modes}
+  enable_self_cleaning: ${enable_self_cleaning}
 
 sensor:
   - platform: uptime
