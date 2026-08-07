@@ -781,13 +781,6 @@ class ToshibaController final : public climate::Climate, public Component {
                 climate::CLIMATE_MODE_HEAT_COOL,
             });
         }
-        supported_traits_.set_supported_swing_modes({
-            climate::CLIMATE_SWING_OFF,
-            climate::CLIMATE_SWING_BOTH,
-            climate::CLIMATE_SWING_VERTICAL,
-            climate::CLIMATE_SWING_HORIZONTAL,
-        });
-
         supported_traits_.add_supported_fan_mode(climate::CLIMATE_FAN_AUTO);
         supported_traits_.add_supported_fan_mode(climate::CLIMATE_FAN_QUIET);
         supported_traits_.add_supported_fan_mode(climate::CLIMATE_FAN_LOW);

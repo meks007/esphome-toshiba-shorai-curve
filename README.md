@@ -91,22 +91,21 @@ The following photos from a Toshiba Haori show how the built-in module can be re
 
 ## ESPHome 2024+ (recommended)
 
-The `toshiba_controller/` directory contains an `external_components`-based component compatible with ESPHome 2024.x and later. The legacy `platform: custom` approach no longer compiles on current ESPHome versions.
+The `toshiba_controller/` directory contains an `external_components`-based component compatible with ESPHome 2024.x and later. `package.yaml` provides the complete shared entity configuration and updates from this repository whenever ESPHome compiles a device. The legacy `platform: custom` approach no longer compiles on current ESPHome versions.
 
 To use the component:
-1. Clone this repository and navigate to the `esphome` directory.
-2. Install ESPHome: https://esphome.io/guides/installing_esphome.html
-3. Copy `template_v3.yaml` to (for example) `toshiba-livingroom.yaml` and fill in your WiFi credentials, API key, and temperature sensor entity ID.
-4. Connect the ESP32 module via USB (first flash only; subsequent updates use OTA).
-5. Run `esphome run toshiba-livingroom.yaml`.
-6. Add the device in Home Assistant (Settings → Devices & Services).
+1. Copy `template_v3.yaml` to your ESPHome Device Builder as (for example) `toshiba-livingroom.yaml`.
+2. Set the device-specific substitutions and add the referenced WiFi, API and OTA values to your local `secrets.yaml`.
+3. Connect the ESP32 module via USB (first flash only; subsequent updates use OTA).
+4. Install the configuration. The remote package and component are fetched automatically from GitHub.
+5. Add the device in Home Assistant (Settings → Devices & Services).
 
 ## Migrating from Legacy (`base.yaml` / `platform: custom`)
 
 If you are upgrading from the old `base.yaml` include with `platform: custom`, the main changes are:
 
 1. **Remove the `<<: !include base.yaml`** line and the `includes: [toshiba-controller.h]` reference.
-2. **Add `external_components`** pointing to the `toshiba_controller/` directory (see `template_v3.yaml`).
+2. **Add the remote package** from `template_v3.yaml`; it also loads the external component.
 3. **Replace the `climate: platform: custom` block** with a top-level `toshiba_controller:` block.
 4. **Replace `sensor: platform: custom`** with `sensor: platform: toshiba_controller` (sensor names are preserved).
 5. **Replace `switch: platform: custom`** with `switch: platform: toshiba_controller` for Internal Thermistor and Ionizer.

@@ -1,0 +1,184 @@
+substitutions:
+  deviceid: "ac_unit"
+  temperature_sensor_entity_id: sensor.room_temperature
+  smart_thermostat_multiplier: "3"
+  smart_thermostat_runaway_protection: "true"
+  disable_cooling_modes: "false"
+
+esp32:
+  variant: esp32
+  framework:
+    type: esp-idf
+
+external_components:
+  - source:
+      type: git
+      url: https://github.com/Broxon/esphome-toshiba-shorai-curve
+      ref: main
+      path: esphome
+    components: [toshiba_controller]
+    refresh: 1s
+
+logger:
+  level: ERROR
+
+uart:
+  - id: ac_serial
+    tx_pin: GPIO33
+    rx_pin: GPIO32
+    baud_rate: 9600
+    parity: EVEN
+
+toshiba_controller:
+  name: ""
+  id: ${deviceid}
+  uart_id: ac_serial
+  temperature_sensor_id: temperature_sensor
+  special_mode_select_id: special_mode
+  swing_mode_select_id: swing_mode
+  power_select_id: power_select
+  smart_thermostat_multiplier: ${smart_thermostat_multiplier}
+  smart_thermostat_runaway_protection: ${smart_thermostat_runaway_protection}
+  disable_cooling_modes: ${disable_cooling_modes}
+
+sensor:
+  - id: temperature_sensor
+    platform: homeassistant
+    internal: true
+    entity_id: ${temperature_sensor_entity_id}
+  - platform: uptime
+    name: Uptime
+  - platform: toshiba_controller
+    toshiba_controller_id: ${deviceid}
+    outdoor_temperature:
+      name: Outdoor Temperature
+    fcu_air_temp:
+      name: FCU Air Temp
+    fcu_setpoint:
+      name: FCU Setpoint
+    fcu_tc_temp:
+      name: FCU TC Temp
+    fcu_tcj_temp:
+      name: FCU TCJ Temp
+    fcu_fan_rpm:
+      name: FCU Fan RPM
+    cdu_td_temp:
+      name: CDU TD Temp
+    cdu_ts_temp:
+      name: CDU TS Temp
+    cdu_te_temp:
+      name: CDU TE Temp
+    cdu_load:
+      name: CDU Load
+    cdu_iac:
+      name: CDU IAC
+
+select:
+  - platform: template
+    name: Special Mode
+    id: special_mode
+    internal: true
+    optimistic: true
+    restore_value: true
+    icon: mdi:star-circle-outline
+    options:
+      - "Standard"
+      - "High Power"
+      - "ECO"
+      - "8 Degrees"
+      - "Sleep Care"
+      - "Floor"
+      - "Comfort"
+    on_value:
+      - lambda: |-
+          static_cast<esphome::ToshibaController*>(id(${deviceid}))->set_special_mode_select(i);
+
+  - platform: template
+    name: Silent Mode
+    id: silent_mode
+    internal: true
+    optimistic: true
+    restore_value: true
+    icon: mdi:volume-off
+    options:
+      - "Off"
+      - "Silent 1"
+      - "Silent 2"
+    on_value:
+      - lambda: |-
+          static_cast<esphome::ToshibaController*>(id(${deviceid}))->set_silent_mode_select(i);
+
+  - platform: template
+    name: Fireplace
+    id: fireplace_mode
+    internal: true
+    optimistic: true
+    restore_value: true
+    icon: mdi:fireplace
+    options:
+      - "Off"
+      - "Fireplace 1"
+      - "Fireplace 2"
+    on_value:
+      - lambda: |-
+          static_cast<esphome::ToshibaController*>(id(${deviceid}))->set_fireplace_select(i);
+
+  - platform: template
+    name: Airflow Mode
+    id: swing_mode
+    optimistic: true
+    restore_value: true
+    icon: mdi:arrow-up-down
+    options:
+      - "Off"
+      - "Vertical"
+      - "Horizontal"
+      - "Vertical & Horizontal"
+      - "Fixed 1"
+      - "Fixed 2"
+      - "Fixed 3"
+      - "Fixed 4"
+      - "Fixed 5"
+      - "HADA Care Flow"
+    on_value:
+      - lambda: |-
+          static_cast<esphome::ToshibaController*>(id(${deviceid}))->set_swing_mode_select(i);
+
+  - platform: template
+    name: Power Select
+    id: power_select
+    optimistic: true
+    restore_value: true
+    icon: mdi:power
+    options:
+      - "50%"
+      - "75%"
+      - "100%"
+    on_value:
+      - lambda: |-
+          static_cast<esphome::ToshibaController*>(id(${deviceid}))->set_power_select(i);
+
+switch:
+  - platform: toshiba_controller
+    toshiba_controller_id: ${deviceid}
+    internal_thermistor:
+      name: Internal Thermistor
+    ionizer:
+      name: Ionizer
+
+  - platform: template
+    name: WiFi LED
+    id: unit_led
+    restore_mode: RESTORE_DEFAULT_ON
+    optimistic: true
+    icon: mdi:wifi
+    on_turn_on:
+      - lambda: |-
+          static_cast<esphome::ToshibaController*>(id(${deviceid}))->set_wifi_led_switch(true);
+    on_turn_off:
+      - lambda: |-
+          static_cast<esphome::ToshibaController*>(id(${deviceid}))->set_wifi_led_switch(false);
+
+  - platform: restart
+    name: "Restart"
+    icon: "mdi:restart"
