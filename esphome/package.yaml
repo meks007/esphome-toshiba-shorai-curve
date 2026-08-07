@@ -22,6 +22,9 @@ external_components:
 logger:
   level: WARN
 
+debug:
+  update_interval: 60s
+
 uart:
   - id: ac_serial
     tx_pin: GPIO33
@@ -47,6 +50,10 @@ sensor:
   - platform: internal_temperature
     name: ESP Temperature
     entity_category: diagnostic
+  - platform: wifi_signal
+    name: WiFi Signal
+    update_interval: 60s
+    entity_category: diagnostic
   - platform: toshiba_controller
     toshiba_controller_id: ${deviceid}
     outdoor_temperature:
@@ -71,6 +78,12 @@ sensor:
       name: CDU Load
     cdu_iac:
       name: CDU IAC
+
+text_sensor:
+  - platform: debug
+    reset_reason:
+      name: Reset Reason
+      entity_category: diagnostic
 
 select:
   - platform: template

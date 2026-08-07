@@ -96,6 +96,15 @@ assert re.search(
     r"platform: internal_temperature\n\s+name: ESP Temperature\n\s+entity_category: diagnostic",
     CONFIG,
 )
+assert re.search(r"debug:\n\s+update_interval: 60s", CONFIG)
+assert re.search(
+    r"platform: wifi_signal\n\s+name: WiFi Signal\n\s+update_interval: 60s\n\s+entity_category: diagnostic",
+    CONFIG,
+)
+assert re.search(
+    r"platform: debug\n\s+reset_reason:\n\s+name: Reset Reason\n\s+entity_category: diagnostic",
+    CONFIG,
+)
 assert "SWITCH_ALWAYS_ON" in HEADER
 assert re.search(
     r"internal_thermistor:\n\s+name: Internal Thermistor\n\s+internal: true",
