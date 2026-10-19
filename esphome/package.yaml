@@ -13,7 +13,7 @@ esp32:
 external_components:
   - source:
       type: git
-      url: https://github.com/Broxon/esphome-toshiba-shorai-curve
+      url: https://github.com/meks007/esphome-toshiba-shorai-curve
       ref: main
       path: esphome
     components: [toshiba_controller]
