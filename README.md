@@ -93,6 +93,8 @@ The following photos from a Toshiba Haori show how the built-in module can be re
 
 The `toshiba_controller/` directory contains an `external_components`-based component compatible with ESPHome 2024.x and later. `package.yaml` provides the complete shared entity configuration and updates from this repository whenever ESPHome compiles a device. The legacy `platform: custom` approach no longer compiles on current ESPHome versions.
 
+> **Note:** ESPHome 2026.5.0 removed the deprecated `ClimateTraits::set_supports_*` accessors in favor of `add_feature_flags()`/`has_feature_flags()`. This component has been updated accordingly and is compatible with ESPHome 2026.5.0 and later (as well as 2024.x/2025.x).
+
 To use the component:
 1. Copy `template_v3.yaml` to your ESPHome Device Builder as (for example) `toshiba-livingroom.yaml`.
 2. Set the device-specific substitutions and add the referenced WiFi, API and OTA values to your local `secrets.yaml`.
