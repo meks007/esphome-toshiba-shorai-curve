@@ -59,6 +59,9 @@ public:
     }
 };
 
+static constexpr const char* CUSTOM_FAN_MODE_LOW_MEDIUM = "low medium";
+static constexpr const char* CUSTOM_FAN_MODE_MEDIUM_HIGH = "medium high";
+
 enum ToshibaSwingMode {
     SWING_MODE_OFF = 0x31,
     SWING_MODE_SWING_VERTICAL = 0x41,
@@ -837,7 +840,7 @@ class ToshibaController final : public climate::Climate, public Component {
         #else
                 supported_traits_.set_supports_current_temperature(true);
         #endif
-        
+
         supported_traits_.set_visual_min_temperature(
             (int)std::min(MIN_TEMP_SETPOINT_HEATING, MIN_TEMP_SETPOINT_COOLING));
         supported_traits_.set_visual_max_temperature(MAX_TEMP_SETPOINT);
