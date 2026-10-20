@@ -1,11 +1,11 @@
 import esphome.codegen as cg
 import esphome.config_validation as cv
-from esphome.components import climate, select, sensor, uart
+from esphome.components import binary_sensor, climate, select, sensor, uart
 from esphome.const import CONF_ID
 
 CODEOWNERS = []
 DEPENDENCIES = ["uart"]
-AUTO_LOAD = ["climate", "sensor", "switch", "select"]
+AUTO_LOAD = ["binary_sensor", "climate", "sensor", "switch", "select"]
 
 toshiba_controller_ns = cg.esphome_ns
 ToshibaController = toshiba_controller_ns.class_(
@@ -41,7 +41,6 @@ CONFIG_SCHEMA = (
         }
     )
     .extend(cv.COMPONENT_SCHEMA)
-)
 
 
 async def to_code(config):
