@@ -6,6 +6,7 @@
 #include <cmath>
 #include <deque>
 
+#include "esphome/components/binary_sensor/binary_sensor.h"
 #include "esphome/components/climate/climate.h"
 #include "esphome/components/select/select.h"
 #include "esphome/components/sensor/sensor.h"
@@ -208,6 +209,8 @@ class ToshibaController final : public climate::Climate, public Component {
     sensor::Sensor* sensor_fcu_tc_temp_{nullptr};
     sensor::Sensor* sensor_fcu_tcj_temp_{nullptr};
     sensor::Sensor* sensor_fcu_fan_rpm_{nullptr};
+    sensor::Sensor* sensor_smart_thermostat_offset_{nullptr};
+    binary_sensor::BinarySensor* binary_sensor_smart_thermostat_runaway_active_{nullptr};
 
     uint64_t loop_cnt_ = 0;
 
@@ -896,6 +899,10 @@ public:
     void set_special_mode_select(esphome::select::Select* sel) { special_mode_select_ = sel; }
     void set_swing_mode_select(esphome::select::Select* sel) { swing_mode_select_ = sel; }
     void set_power_select(esphome::select::Select* sel) { power_selection_select_ = sel; }
+    void set_smart_thermostat_offset_sensor(esphome::sensor::Sensor* s) { sensor_smart_thermostat_offset_ = s; }
+    void set_smart_thermostat_runaway_active_binary_sensor(esphome::binary_sensor::BinarySensor* s) {
+        binary_sensor_smart_thermostat_runaway_active_ = s;
+    }
     void set_smart_thermostat_multiplier(float val) { config_settings_.smart_thermostat_multiplier = val; }
     void set_enable_self_cleaning(bool val) { config_settings_.enable_self_cleaning = val; }
     void set_disable_cooling_modes(bool val) {
@@ -1525,6 +1532,9 @@ private:
             }
         }
 
+        // expose the learned IDU-vs-external sensor offset as diagnostic sensor
+        if (sensor_smart_thermostat_offset_) sensor_smart_thermostat_offset_->publish_state((float)median_error);
+
         // calculate target_error and target_setpoint
         double target_error = this->target_temperature - room_temp;
         double target_setpoint =
@@ -1558,6 +1568,10 @@ private:
 
             }
         }
+
+        // expose whether the thermal runaway correction (+3 / -3 deg C) is currently applied
+        if (binary_sensor_smart_thermostat_runaway_active_)
+            binary_sensor_smart_thermostat_runaway_active_->publish_state(thermal_runaway_fix != 0);
 
         // to account for the low 1°C precision of the device, we need to either ceil or floor the target.
         // we switch only at extrema which ideally leads to a slow, but constant osciallation around the target
