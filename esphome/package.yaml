@@ -78,6 +78,16 @@ sensor:
       name: CDU Load
     cdu_iac:
       name: CDU IAC
+    smart_thermostat_offset:
+      name: Smart Thermostat Offset
+      entity_category: diagnostic
+
+binary_sensor:
+  - platform: toshiba_controller
+    toshiba_controller_id: ${deviceid}
+    smart_thermostat_runaway_active:
+      name: Smart Thermostat Runaway Active
+      entity_category: diagnostic
 
 text_sensor:
   - platform: debug
