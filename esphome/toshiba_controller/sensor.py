@@ -62,6 +62,16 @@ SENSOR_KEYS = {
             accuracy_decimals=0,
         ),
     },
+    "smart_thermostat_offset": {
+        "setter": "set_smart_thermostat_offset_sensor",
+        "schema": sensor.sensor_schema(
+            unit_of_measurement=UNIT_CELSIUS,
+            icon="mdi:thermometer-lines",
+            device_class=DEVICE_CLASS_TEMPERATURE,
+            state_class=STATE_CLASS_MEASUREMENT,
+            accuracy_decimals=2,
+        ),
+    },
 }
 
 CONFIG_SCHEMA = cv.Schema(
