@@ -41,6 +41,7 @@ CONFIG_SCHEMA = (
         }
     )
     .extend(cv.COMPONENT_SCHEMA)
+)
 
 
 async def to_code(config):
