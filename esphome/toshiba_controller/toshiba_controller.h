@@ -17,6 +17,7 @@
 #include "esphome/core/helpers.h"
 #include "esphome/core/log.h"
 #include "esphome/core/version.h"  // ESPHOME_VERSION_CODE / VERSION_CODE (pulls in macros.h)
+#include "esphome/core/alloc_helpers.h"
 
 static const char* const TAG = "toshiba-controller";
 static const char* const CAPTURE_TAG = "toshiba-capture";
